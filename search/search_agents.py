@@ -531,8 +531,22 @@ def food_heuristic(state, problem):
     problem.heuristic_info['wallCount']
     """
     position, food_grid = state
-    "*** YOUR CODE HERE ***"
-    return 0
+    
+    # Get a list of all remaining food coordinates
+    food_list = food_grid.as_list()
+    
+    # If there is no food left, the distance is 0
+    if not food_list:
+        return 0
+        
+    # Calculate the Manhattan distance to each food dot and find the maximum
+    # Why? Agent must travel to furthest food point
+    biggest_distance = max(
+        abs(position[0] - food[0]) + abs(position[1] - food[1]) 
+        for food in food_list
+    )
+
+    return biggest_distance
 
 
 def simplified_corners_heuristic(state, problem):

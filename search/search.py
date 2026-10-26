@@ -132,20 +132,119 @@ def depth_first_search(problem):
     print("Is the start a goal?", problem.is_goal_state(problem.get_start_state()))
     print("Start's successors:", problem.get_successors(problem.get_start_state()))
     """
-    "*** YOUR CODE HERE ***"
-    util.raise_not_defined()
+
+    expanded_nodes = set()
+    frontier = util.Stack()
+
+    # Initialize frontier
+    initial_node = problem.get_start_state()
+    frontier.push(initial_node)
+
+    # Dictionary to store paths to each node
+    moves_to_node = {}
+    moves_to_node[initial_node] = []
+
+    while not frontier.is_empty():
+        # Choose a node from frontier
+        node = frontier.pop()
+        expanded_nodes.add(node)
+        #print(f"CHOSE {node} FROM FRONTIER")
+
+        if problem.is_goal_state(node):
+            return moves_to_node[node]
+        
+        #print(f"{node} ISN'T GOAL STATE")
+
+        for next_state in problem.get_successors(node):
+            (childNode, action, cost) = next_state
+
+            if childNode not in expanded_nodes:
+                #print(f"{childNode} NOT VISITED YET ")
+
+                frontier.push(childNode)
+                path_to_parent = moves_to_node[node]
+                moves_to_node[childNode] = path_to_parent + [action]
+                #print(f"START TO PARENT {node}: {path_to_parent}")
+                #print(f"FULL PATH TO {childNode}: {moves_to_node[childNode]}")
+
+    return []
 
 
 
 def breadth_first_search(problem):
     """Search the shallowest nodes in the search tree first."""
-    "*** YOUR CODE HERE ***"
-    util.raise_not_defined()
+    expanded_nodes = set()
+    frontier = util.Queue()
+
+    moves_to_node = {}
+
+    initial_node = problem.get_start_state()
+    frontier.push(initial_node)
+    moves_to_node[initial_node] = []
+    #print(f"INITIAL STATE: {initial_node}")
+
+    while not frontier.is_empty():
+        # Choose a node from frontier
+        node = frontier.pop()
+        expanded_nodes.add(node)
+        #print(f"CHOSE {node} FROM FRONTIER")
+
+        if problem.is_goal_state(node):
+            return moves_to_node[node]
+        
+        #print(f"{node} ISN'T GOAL STATE")
+
+        for next_state in problem.get_successors(node):
+            (childNode, action, cost) = next_state
+
+            if childNode not in expanded_nodes and childNode not in frontier.list:
+                #print(f"{childNode} NOT VISITED YET ")
+
+                # Add child to frontier at the end of the queue
+                frontier.push(childNode)
+
+                path_to_parent = moves_to_node[node]
+                moves_to_node[childNode] = path_to_parent + [action]
+                #print(f"START TO PARENT {node}: {path_to_parent}")
+                #print(f"FULL PATH TO {childNode}: {moves_to_node[childNode]}")
+
+    return []
 
 def uniform_cost_search(problem):
     """Search the node of least total cost first."""
-    "*** YOUR CODE HERE ***"
-    util.raise_not_defined()
+    expanded_nodes = set()
+    frontier = util.PriorityQueue()
+
+    initial_node = problem.get_start_state()
+    # Push a tuple of (state, path, cost) and use cost as the priority
+    frontier.push((initial_node, [], 0), priority=0)
+
+    while not frontier.is_empty():
+        # Choose a node from frontier
+        node, path, current_cost = frontier.pop()
+
+        # If we have already expanded this node (e.g. from a duplicate push), skip it
+        if node in expanded_nodes:
+            continue
+            
+        expanded_nodes.add(node)
+
+        if problem.is_goal_state(node):
+            return path
+
+        for next_state in problem.get_successors(node):
+            childNode, action, stepCost = next_state
+
+            if childNode not in expanded_nodes:
+                new_cost = current_cost + stepCost
+                new_path = path + [action]
+                
+                # Push every valid child. The PriorityQueue will naturally sort them.
+                # If duplicates are pushed, the one with the lowest cost is popped first, 
+                # and the more expensive duplicates will be caught by the `node in expanded_nodes` check later.
+                frontier.push((childNode, new_path, new_cost), priority=new_cost)
+
+    return []
 
 def null_heuristic(state, problem=None):
     """
@@ -156,8 +255,40 @@ def null_heuristic(state, problem=None):
 
 def a_star_search(problem, heuristic=null_heuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
-    "*** YOUR CODE HERE ***"
-    util.raise_not_defined()
+    expanded_nodes = set()
+    frontier = util.PriorityQueue()
+
+    initial_node = problem.get_start_state()
+    # Push a tuple of (state, path, cost) and use cost as the priority
+    frontier.push((initial_node, [], 0), priority=0)
+
+    while not frontier.is_empty():
+        # Choose a node from frontier
+        node, path, current_cost = frontier.pop()
+
+        # If we have already expanded this node (e.g. from a duplicate push), skip it
+        if node in expanded_nodes:
+            continue
+            
+        expanded_nodes.add(node)
+
+        if problem.is_goal_state(node):
+            return path
+
+        for next_state in problem.get_successors(node):
+            childNode, action, stepCost = next_state
+
+            if childNode not in expanded_nodes:
+                new_cost = current_cost + stepCost
+                priority = new_cost + heuristic(childNode, problem)
+                new_path = path + [action]
+                
+                # Push every valid child. The PriorityQueue will naturally sort them.
+                # If duplicates are pushed, the one with the lowest cost is popped first, 
+                # and the more expensive duplicates will be caught by the `node in expanded_nodes` check later.
+                frontier.push((childNode, new_path, new_cost), priority=priority)
+
+    return []
 
 # Abbreviations
 bfs = breadth_first_search
