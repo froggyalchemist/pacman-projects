@@ -71,10 +71,31 @@ class ReflexAgent(Agent):
         new_pos = successor_game_state.get_pacman_position()
         new_food = successor_game_state.get_food()
         new_ghost_states = successor_game_state.get_ghost_states()
-        new_scared_times = [ghostState.scared_timer for ghostState in new_ghost_states]
+        #new_scared_times = [ghostState.scared_timer for ghostState in new_ghost_states]
+
+        # Encourage Pacman to move
+        if current_game_state.get_pacman_position() == new_pos:
+            return -float("inf")
+
+        # Find distance to closest ghost
+        ghost_positions = [ghost_state.get_position() for ghost_state in new_ghost_states]
+        distance_to_closest_ghost = min([manhattan_distance(new_pos, ghost_pos) for ghost_pos in ghost_positions])
+       
+        # If ghost is less than 2 moves away, we only care about getting away from the ghost
+        if distance_to_closest_ghost < 2:
+            return -float("inf")          
         
-        "*** YOUR CODE HERE ***"
-        return successor_game_state.get_score()
+        # Find distance to closest food point
+        food_positions = new_food.as_list()
+        if not food_positions:
+            return float("inf") # No food left on the board, Pacman wins
+        else:
+            distance_to_closest_food = min([manhattan_distance(new_pos, food_pos) for food_pos in food_positions])
+
+        # We want to maximze our score and minimize distance to food
+        score = successor_game_state.get_score() + (1 / distance_to_closest_food)
+
+        return score
 
 def score_evaluation_function(current_game_state):
     """
