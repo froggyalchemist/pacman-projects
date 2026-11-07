@@ -156,9 +156,44 @@ class MinimaxAgent(MultiAgentSearchAgent):
         game_state.is_lose():
         Returns whether or not the game state is a losing state
         """
-        "*** YOUR CODE HERE ***"
-        util.raise_not_defined()
-    
+        # Pacman is agent 0, no rounds completed yet. [1] extracts the action.
+        return self.minimax(game_state, agent_index=0, depth=0)[1]
+        
+    def minimax(self, game_state, agent_index, depth):
+        """Uses the minimax algorithm to find the action an agent will play in a certain game state,
+        as well as the minimax value of this action.
+
+        :param game_state: current state of the game
+        :param agent_index: index of agent who's playing (0 for Pacman, >=1 for ghosts)         
+        :param depth: number of full rounds already played.
+        :returns (value, action): minimax value of the action, and the action played
+        """
+
+        # Stop -> maximum depth reached or terminal state
+        if depth == self.depth or game_state.is_win() or game_state.is_lose():
+            return self.evaluation_function(game_state), None
+        
+        # If the last ghost just moved, the round is complete
+        next_agent_index = agent_index + 1
+        next_depth = depth
+        if next_agent_index == game_state.get_num_agents():
+            next_agent_index = 0    # Pacman moves next
+            next_depth = depth + 1  # Round finished, increase depth
+
+        # Find minimax value of all possible actions from this state
+        results = []
+        for action in game_state.get_legal_actions(agent_index):
+            next_state = game_state.generate_successor(agent_index, action)
+            value, _ = self.minimax(next_state, next_agent_index, next_depth)
+            results.append((value, action))
+
+        # Pacman chooses action with highest minimax value
+        if agent_index == 0:
+            return max(results, key=lambda x: x[0])
+        
+        # Ghosts choose action with lowest minimax value
+        else:
+            return min(results, key=lambda x: x[0])
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
