@@ -202,11 +202,76 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
 
     def get_action(self, game_state):
         """
-        Returns the minimax action using self.depth and self.evaluation_function
-        """
-        "*** YOUR CODE HERE ***"
-        util.raise_not_defined()
+        Returns the minimax action from the current game_state using self.depth
+        and self.evaluation_function.
 
+        Here are some method calls that might be useful when implementing minimax.
+
+        game_state.get_legal_actions(agent_index):
+        Returns a list of legal actions for an agent
+        agent_index=0 means Pacman, ghosts are >= 1
+
+        game_state.generate_successor(agent_index, action):
+        Returns the successor game state after an agent takes an action
+
+        game_state.get_num_agents():
+        Returns the total number of agents in the game
+
+        game_state.is_win():
+        Returns whether or not the game state is a winning state
+
+        game_state.is_lose():
+        Returns whether or not the game state is a losing state
+        """
+        # Pacman is agent 0, no rounds completed yet. [1] extracts the action.
+        return self.alpha_beta_pruning(game_state, agent_index=0, depth=0)[1]
+
+    def alpha_beta_pruning(self, game_state, agent_index, depth, alpha=-float("inf"), beta=float("inf")):
+        
+        # Stop -> maximum depth reached or terminal state
+        if depth == self.depth or game_state.is_win() or game_state.is_lose():
+            return self.evaluation_function(game_state), None
+
+        # If the last ghost just moved, the round is complete
+        next_agent_index = agent_index + 1
+        next_depth = depth
+        if next_agent_index == game_state.get_num_agents():
+            next_agent_index = 0    # Pacman moves next
+            next_depth = depth + 1  # Round finished, increase depth
+
+        # Pacman = Max player
+        if agent_index == 0:
+            return self.max_value(game_state, agent_index, next_agent_index, next_depth, alpha, beta)
+        # Ghost = Min player
+        return self.min_value(game_state, agent_index, next_agent_index, next_depth, alpha, beta)
+
+    def max_value(self, state, agent_index, next_agent_index, next_depth, alpha, beta):
+        """Implementation of max-value function described in pseudocode in the problem statement """
+        
+        value, best_action = -float("inf"), None
+        for action in state.get_legal_actions(agent_index):
+            successor = state.generate_successor(agent_index, action)
+            child_value, _ = self.alpha_beta_pruning(successor, next_agent_index, next_depth, alpha, beta)
+            if child_value > value:
+                value, best_action = child_value, action
+            if value > beta: # no pruning on equality
+                return value, best_action
+            alpha = max(alpha, value)
+        return value, best_action
+
+    def min_value(self, state, agent_index, next_agent_index, next_depth, alpha, beta):
+        """Implementation of min-value function described in pseudocode in the problem statement """
+
+        value, best_action = float("inf"), None
+        for action in state.get_legal_actions(agent_index):
+            successor = state.generate_successor(agent_index, action)
+            child_value, _ = self.alpha_beta_pruning(successor, next_agent_index, next_depth, alpha, beta)
+            if child_value < value:
+                value, best_action = child_value, action
+            if value < alpha: # no pruning on equality
+                return value, best_action
+            beta = min(beta, value)
+        return value, best_action
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
