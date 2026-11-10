@@ -1,4 +1,3 @@
-# value_iteration_agents.py
 # -----------------------
 # Licensing Information:  You are free to use or extend these projects for
 # educational purposes provided that (1) you do not distribute or publish
@@ -65,8 +64,31 @@ class ValueIterationAgent(ValueEstimationAgent):
           Run the value iteration algorithm. Note that in standard
           value iteration, V_k+1(...) depends on V_k(...)'s.
         """
-        "*** YOUR CODE HERE ***"
-            
+        # Start with an arbitrary value function estimate V_0 -> self.values is already initialised to 0
+
+        # For k = 0, 1, ..., iterations - 1, compute V_k+1 = T_star · V_k
+        for k in range(self.iterations):
+
+            # new_values holds V_{k+1}
+            # self.values holds V_k. All Q values for V_{k+1} are estimated from the ones in iteration k.
+            new_values = util.Counter()
+
+            # Update values of all states V_k+1(s) = max_a Q_k(s,a)
+            for s in self.mdp.get_states():
+
+                actions = self.mdp.get_possible_actions(s)
+                if not actions or self.mdp.is_terminal(s):
+                    # No actions = no future rewards, so V(s) = 0.
+                    new_values[s] = 0
+
+                else:
+                    # Find Q_k+1(s, a) for every action, then take the best one
+                    q_values = [self.compute_q_value_from_values(s, a) for a in actions]
+                    new_values[s] = max(q_values)
+
+            # V_k+1 becomes the current estimate for the next iteration
+            self.values = new_values
+
     def get_value(self, state):
         """
           Return the value of the state (computed in __init__).
@@ -78,8 +100,15 @@ class ValueIterationAgent(ValueEstimationAgent):
           Compute the Q-value of action in state from the
           value function stored in self.values.
         """
-        "*** YOUR CODE HERE ***"
-        util.raise_not_defined()
+        # This function implements the following formulas from the lecture slides:
+        # R(s,a) = Σ_s' P(s'|s,a) · R(s,a,s')
+        # Q*(s,a) = R(s,a) + γ · Σ_s' P(s'|s,a) · V(s')
+        #         = Σ_s' P(s'|s,a) · R(s,a,s') + γ · Σ_s' P(s'|s,a) · V(s')
+        q_value = 0
+        for (s_next, prob) in self.mdp.get_transition_states_and_probs(state, action):
+            q_value += prob * self.mdp.get_reward(state, action, s_next) # Reward for performing action a in state s R(s,a)
+            q_value += prob * self.discount * self.values[s_next]        # Discounted expected future reward
+        return q_value
 
     def compute_action_from_values(self, state):
         """
@@ -90,8 +119,17 @@ class ValueIterationAgent(ValueEstimationAgent):
           there are no legal actions, which is the case at the
           terminal state, you should return None.
         """
-        "*** YOUR CODE HERE ***"
-        util.raise_not_defined()
+        actions = self.mdp.get_possible_actions(state)
+        if not actions:
+            return None
+        else:
+            action_values = util.Counter()
+            for a in actions:
+                # Q-value of taking action a in this state (includes reward and discount)
+                action_values[a] = self.compute_q_value_from_values(state, a)
+
+            # Best action is the one with the highest Q value
+            return action_values.arg_max()
 
     def get_policy(self, state):
         return self.compute_action_from_values(state)
@@ -152,4 +190,3 @@ class PrioritizedSweepingValueIterationAgent(AsynchronousValueIterationAgent):
 
     def run_value_iteration(self):
         """*** YOUR CODE HERE ***"""
-
