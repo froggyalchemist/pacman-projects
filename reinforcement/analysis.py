@@ -65,10 +65,15 @@ def question3e():
     # If not possible, return 'NOT POSSIBLE'
 
 def question8():
-    answer_epsilon = None
-    answer_learning_rate = None
-    return answer_epsilon, answer_learning_rate
-    # If not possible, return 'NOT POSSIBLE'
+    # Q8: Is there an epsilon and a learning rate for which it is
+    # highly likely (greater than 99%) that the optimal policy will
+    # be learned after 50 iterations?
+
+    # A: No, it is not possible because for Q-learning to converge we need many more iterations
+    # For epsilon = 0 -> no exploration, agent gets stuck in local maxima (leftmost goal with value 1)
+    # For epsilon = 1 -> all exploration, but still the chance to reach the 10 on the right is really low (<5%)
+
+    return 'NOT POSSIBLE'
 
 if __name__ == '__main__':
     print('Answers to analysis questions:')
