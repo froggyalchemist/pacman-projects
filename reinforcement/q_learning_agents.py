@@ -116,7 +116,6 @@ class QLearningAgent(ReinforcementAgent):
         """
         # Pick Action
         legal_actions = self.get_legal_actions(state)
-        action = None
 
         if len(legal_actions) == 0:
             return None
