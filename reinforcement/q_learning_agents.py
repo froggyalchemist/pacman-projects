@@ -42,7 +42,8 @@ class QLearningAgent(ReinforcementAgent):
         "You can initialize Q-values here..."
         ReinforcementAgent.__init__(self, **args)
 
-        "*** YOUR CODE HERE ***"
+        # Initially, all Q-values are 0
+        self.q_values = util.Counter()
 
     def get_q_value(self, state, action):
         """
@@ -50,8 +51,7 @@ class QLearningAgent(ReinforcementAgent):
           Should return 0.0 if we have never seen a state
           or the Q node value otherwise
         """
-        "*** YOUR CODE HERE ***"
-        util.raise_not_defined()
+        return self.q_values[(state, action)]
 
 
     def compute_value_from_q_values(self, state):
@@ -61,8 +61,23 @@ class QLearningAgent(ReinforcementAgent):
           there are no legal actions, which is the case at the
           terminal state, you should return a value of 0.0.
         """
-        "*** YOUR CODE HERE ***"
-        util.raise_not_defined()
+        legal_actions = self.get_legal_actions(state)
+
+        # No legal actions in this state
+        if len(legal_actions) == 0:
+            return 0.0
+
+        action_to_q_value = util.Counter()
+
+        # Find best possible action (the one with highest Q-value)
+        for action in legal_actions:
+            action_to_q_value[action] = self.get_q_value(state, action)
+        best_action = action_to_q_value.arg_max()
+        
+        # Return the Q-value of the best action
+        return action_to_q_value[best_action]
+        
+
 
     def compute_action_from_q_values(self, state):
         """
@@ -70,8 +85,23 @@ class QLearningAgent(ReinforcementAgent):
           are no legal actions, which is the case at the terminal state,
           you should return None.
         """
-        "*** YOUR CODE HERE ***"
-        util.raise_not_defined()
+
+        legal_actions = self.get_legal_actions(state)
+        
+        # No legal actions in this state
+        if len(legal_actions) == 0:
+            return None
+
+        action_to_q_value = util.Counter()
+
+        # Find Q-values of all legal actions
+        for action in legal_actions:
+            action_to_q_value[action] = self.get_q_value(state, action)
+
+        # Break ties: Collect all actions that have the optimal value, and pick one of them at random
+        best_value = max(action_to_q_value.values())
+        best_actions = [a for a, v in action_to_q_value.items() if v == best_value]
+        return random.choice(best_actions)
 
     def get_action(self, state):
         """
@@ -87,9 +117,18 @@ class QLearningAgent(ReinforcementAgent):
         # Pick Action
         legal_actions = self.get_legal_actions(state)
         action = None
-        "*** YOUR CODE HERE ***"
-        util.raise_not_defined()
+
+        if len(legal_actions) == 0:
+            return None
         
+        # With prob. epsilon, take a random action
+        if util.flip_coin(p=self.epsilon):
+            return random.choice(legal_actions)
+        
+        # With prob. 1-epsilon, take the best policy action
+        else:
+            return self.get_policy(state)
+                  
 
     def update(self, state, action, next_state, reward):
         """
@@ -100,8 +139,10 @@ class QLearningAgent(ReinforcementAgent):
           NOTE: You should never call this function,
           it will be called on your behalf
         """
-        "*** YOUR CODE HERE ***"
-        util.raise_not_defined()
+        # Q(s_t, a_t) ← (1 − α_t)Q(s_t, a_t) + α_t[r_t + γ max a′ Q(s_t+1, a′)]
+        self.q_values[(state, action)] = ((1 - self.alpha) * self.get_q_value(state, action) +
+                                          self.alpha * (reward + self.discount * self.get_value(next_state)))
+
 
     def get_policy(self, state):
         return self.compute_action_from_q_values(state)
